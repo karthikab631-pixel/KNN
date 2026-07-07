@@ -1,0 +1,96 @@
+# Import libraries
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from matplotlib.colors import ListedColormap
+import numpy as np
+
+# Load dataset
+iris = load_iris()
+
+# Use only first two features for visualization
+X = iris.data[:, :2]
+y = iris.target
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# Normalize features
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Train KNN with K=5
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+
+# Prediction
+y_pred = knn.predict(X_test)
+
+# Accuracy
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy:", accuracy)
+
+# Confusion Matrix
+cm = confusion_matrix(y_test, y_pred)
+print("\nConfusion Matrix:")
+print(cm)
+
+# Classification Report
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# Test different K values
+k_values = range(1, 11)
+accuracies = []
+
+for k in k_values:
+    model = KNeighborsClassifier(n_neighbors=k)
+    model.fit(X_train, y_train)
+    pred = model.predict(X_test)
+    accuracies.append(accuracy_score(y_test, pred))
+
+# Plot Accuracy vs K
+plt.figure(figsize=(6,4))
+plt.plot(k_values, accuracies, marker='o')
+plt.title("Accuracy vs K")
+plt.xlabel("K Value")
+plt.ylabel("Accuracy")
+plt.grid(True)
+plt.show()
+
+# Decision Boundary
+X_set, y_set = X_train, y_train
+
+X1, X2 = np.meshgrid(
+    np.arange(X_set[:,0].min()-1, X_set[:,0].max()+1, 0.01),
+    np.arange(X_set[:,1].min()-1, X_set[:,1].max()+1, 0.01)
+)
+
+plt.figure(figsize=(7,6))
+plt.contourf(
+    X1, X2,
+    knn.predict(np.array([X1.ravel(), X2.ravel()]).T).reshape(X1.shape),
+    alpha=0.3,
+    cmap=ListedColormap(("red","green","blue"))
+)
+
+plt.scatter(
+    X_set[:,0],
+    X_set[:,1],
+    c=y_set,
+    cmap=ListedColormap(("red","green","blue")),
+    edgecolor='k'
+)
+
+plt.title("KNN Decision Boundary")
+plt.xlabel("Feature 1")
+plt.ylabel("Feature 2")
+plt.show()
